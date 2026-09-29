@@ -10,8 +10,9 @@
   ],
   "scripts": {
     "dev": "npm run dev --workspace=@workspace/one-acre-land",
-    "build": "npm run build --workspace=@workspace/one-acre-land",
-    "start": "npm run serve --workspace=@workspace/one-acre-land",
+    "build": "npm run build --workspace=@workspace/one-acre-land && npm run build --workspace=@workspace/api-server",
+    "start": "node server.mjs",
+    "serve": "node server.mjs",
     "lint": "npm run typecheck --workspace=@workspace/one-acre-land"
   },
   "dependencies": {

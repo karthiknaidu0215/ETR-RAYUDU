@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "node ./dev.mjs",
     "build": "vite build --config vite.config.ts",
-    "serve": "node ./preview.mjs",
+    "serve": "node ../../server.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
