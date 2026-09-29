@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "1 Acre Farm Planner"
+description = "An interactive 3D farm-planning editor for laying out crop zones, plants, roads, and farm infrastructure across a parcel of land."
+version = "1.0.0"
+id = "artifacts/one-acre-land"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 23951
+
+[services.development]
+run = "pnpm --filter @workspace/one-acre-land run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/one-acre-land", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/one-acre-land/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "23951"
+BASE_PATH = "/"

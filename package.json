@@ -1,0 +1,25 @@
+{
+  "name": "workspace",
+  "version": "0.0.0",
+  "private": true,
+  "license": "MIT",
+  "workspaces": [
+    "artifacts/*",
+    "lib/*",
+    "scripts"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace=@workspace/one-acre-land",
+    "build": "npm run build --workspace=@workspace/one-acre-land",
+    "start": "npm run serve --workspace=@workspace/one-acre-land",
+    "lint": "npm run typecheck --workspace=@workspace/one-acre-land"
+  },
+  "dependencies": {
+    "@replit/connectors-sdk": "^0.4.3"
+  },
+  "devDependencies": {
+    "prettier": "^3.9.6",
+    "typescript": "~5.9.3",
+    "vite": "^7.3.2"
+  }
+}

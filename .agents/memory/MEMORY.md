@@ -1,0 +1,1 @@
+- [WebGL preview fallback](webgl-preview-fallback.md) — guard Three.js renderer creation because preview browsers may not provide a usable WebGL context.

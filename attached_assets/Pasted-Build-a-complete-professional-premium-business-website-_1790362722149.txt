@@ -1,0 +1,572 @@
+Build a complete, professional, premium business website called **“ETR NURSERY”**.
+
+This must NOT look like a basic student project, simple Bootstrap website, or ordinary CRUD dashboard. The design should feel like a modern premium agricultural/plantation technology company with a unique visual identity, smooth 3D animations, elegant typography, cinematic transitions, and a polished responsive UI.
+
+## 1. BRAND & OPENING EXPERIENCE
+
+Brand name:
+
+**ETR NURSERY**
+
+Create a premium ETR Nursery logo and use it consistently throughout the website.
+
+When the website initially opens, show a cinematic loading/intro animation:
+
+* Dark elegant background
+* ETR NURSERY logo appearing with a smooth 3D animation
+* Subtle leaves/particles/environmental elements
+* Logo can have a slight 3D rotation/reveal effect
+* Smooth transition from loading screen into the main website
+* Keep it professional and fast, not excessive
+* Add a “Skip Intro” option
+
+The overall visual style should combine:
+
+* Premium nursery
+* Agriculture
+* Plantation planning
+* Modern technology
+* 3D visualization
+* Business dashboard aesthetics
+
+Use subtle green/natural tones with dark premium backgrounds, glassmorphism, gradients, shadows and modern cards.
+
+Do NOT make every section green. Maintain a sophisticated professional color system.
+
+---
+
+# 2. LANDING PAGE
+
+Create a premium hero section.
+
+Main heading:
+
+**“Plan Your Land. Grow Your Future.”**
+
+Subheading:
+
+**“Smart plantation planning for every acre.”**
+
+Explain that ETR Nursery helps users plan plantations based on:
+
+* Land size
+* Location
+* Plant category
+* Plant spacing
+* Number of plants
+* Investment
+* Estimated requirements
+
+Add a beautiful animated plantation/farm visual.
+
+Include subtle 3D elements such as:
+
+* Floating leaves
+* 3D plant models or stylized plant illustrations
+* Animated farm grid
+* Floating statistics
+* Smooth scroll animations
+
+Main buttons:
+
+**Plan My Acre**
+
+**Explore Plants**
+
+---
+
+# 3. LOGIN SYSTEM
+
+Provide two separate login options:
+
+### USER LOGIN
+
+Users should log in using:
+
+* Name
+* Phone Number
+
+Do not require complicated authentication for the prototype.
+
+After successful login, take the user to the User Dashboard.
+
+### ADMIN LOGIN
+
+Admin login should have:
+
+Username:
+
+`rayudu`
+
+Password:
+
+`rayudu`
+
+IMPORTANT:
+
+Implement this properly in the application authentication flow rather than simply displaying the credentials on the UI.
+
+After successful admin authentication, redirect to:
+
+**Admin Dashboard**
+
+Admin should have complete access to manage the website.
+
+---
+
+# 4. USER DASHBOARD
+
+After a user logs in, show a personalized dashboard.
+
+Example:
+
+**Welcome, [User Name]**
+
+Show cards such as:
+
+* Plan My Land
+* My Plantation Plans
+* Plant Catalog
+* Price Estimate
+* Previous Bills
+* Download Bill
+
+Use premium animated cards.
+
+---
+
+# 5. MAIN FEATURE — 1 ACRE PLANTATION PLANNER
+
+This is the most important feature of the website.
+
+The user currently has:
+
+**1 Acre Land**
+
+Create a dedicated interactive plantation planning page.
+
+Display:
+
+**Your Land: 1 Acre**
+
+Allow the system to calculate how many plants can fit inside the selected land.
+
+The calculation must consider:
+
+* Land size
+* Plant spacing
+* Row spacing
+* Plant-to-plant distance
+* Selected plant type
+* Optional boundary space
+* Optional service area
+
+Do NOT simply hardcode the number of plants.
+
+Create a proper calculation system.
+
+For example:
+
+If a plant requires a particular spacing, calculate an approximate plant count for 1 acre.
+
+Show:
+
+**Available Area**
+
+**Recommended Plant Spacing**
+
+**Estimated Number of Plants**
+
+**Rows**
+
+**Plants per Row**
+
+Create an attractive visual representation of the land.
+
+---
+
+# 6. INTERACTIVE FARM VISUALIZATION
+
+Create a visual 1-acre farm planner.
+
+Show a top-down farm layout.
+
+Represent plants as visual markers/icons.
+
+For example:
+
+🌳 🌳 🌳 🌳
+
+🌳 🌳 🌳 🌳
+
+🌳 🌳 🌳 🌳
+
+But make the actual website visualization much more professional.
+
+Allow the user to change:
+
+* Plant
+* Spacing
+* Number of plants
+* Orientation
+* Optional boundary
+
+When the user changes the plant or spacing, update the layout dynamically.
+
+Add smooth animation when plants appear/disappear.
+
+---
+
+# 7. PLANT CATALOG
+
+Create a professional plant catalog.
+
+Each plant should have:
+
+* Plant image
+* Plant name
+* Category
+* Price
+* Recommended spacing
+* Plants per acre
+* Fertilizer information
+* Maintenance information
+* Estimated growth information
+* Description
+
+Categories:
+
+### Fruit Plants
+
+### Timber / Wood Plants
+
+### Avenue Plants
+
+### Flower Plants
+
+### Landscaping Plants
+
+Use beautiful cards with hover animations.
+
+Each plant card should have:
+
+**View Details**
+
+**Add to Plan**
+
+---
+
+# 8. PLANT SELECTION
+
+Allow users to select plants for their 1-acre plan.
+
+For every selected plant display:
+
+* Plant name
+* Quantity
+* Unit price
+* Total price
+* Required spacing
+* Estimated area
+
+Allow:
+
+`+`
+
+`-`
+
+quantity controls.
+
+Also allow users to remove a plant.
+
+---
+
+# 9. LIVE PRICE CALCULATOR
+
+This is extremely important.
+
+As the user changes:
+
+* Plant
+* Quantity
+* Price
+* Additional services
+* Tax
+
+the total should update immediately.
+
+Display a professional pricing summary:
+
+Plant Cost
+₹ XX,XXX
+
+Plantation Services
+₹ X,XXX
+
+Fertilizer
+₹ X,XXX
+
+Transportation
+₹ X,XXX
+
+Other Charges
+₹ X,XXX
+
+Subtotal
+₹ XX,XXX
+
+Tax
+₹ X,XXX
+
+Grand Total
+₹ XX,XXX
+
+Make the calculation dynamic.
+
+Do not hardcode the final total.
+
+---
+
+# 10. ADMIN DASHBOARD
+
+Create a completely separate premium Admin Dashboard.
+
+Admin credentials:
+
+Username: `rayudu`
+
+Password: `rayudu`
+
+Admin should have COMPLETE CONTROL over the website content.
+
+Create sidebar navigation:
+
+Dashboard
+
+Plants
+
+Categories
+
+Pricing
+
+Taxes
+
+Plantation Rules
+
+Locations
+
+Services
+
+Users
+
+Orders / Plans
+
+Bills
+
+Website Content
+
+Images
+
+About ETR Nursery
+
+Contact Information
+
+Settings
+
+---
+
+# 11. ADMIN — PLANT MANAGEMENT
+
+Admin must be able to:
+
+* Add plant
+* Edit plant
+* Delete plant
+* Change plant name
+* Change price
+* Change category
+* Change spacing
+* Change plants-per-acre rules
+* Upload plant image
+* Change description
+* Change fertilizer information
+* Change maintenance information
+
+Example:
+
+Admin changes:
+
+**Mango**
+
+from
+
+₹250
+
+to
+
+₹300
+
+The user website must automatically display:
+
+₹300
+
+No hardcoded plant prices.
+
+---
+
+# 12. ADMIN — TAX MANAGEMENT
+
+Admin should be able to control:
+
+* GST/tax percentage
+* Service tax
+* Transportation charge
+* Additional charges
+* Discounts
+
+Example:
+
+GST = 18%
+
+If admin changes it to:
+
+GST = 12%
+
+the user billing calculation should automatically use 12%.
+
+---
+
+# 13. ADMIN — WEBSITE CONTENT
+
+Admin should be able to edit:
+
+* ETR Nursery description
+* About Us
+* Contact information
+* Hero text
+* Services
+* Address
+* Phone number
+* Email
+* Images
+* Banner images
+* Plant categories
+* Promotional content
+
+Allow image upload where appropriate.
+
+---
+
+# 14. ADMIN — USER MANAGEMENT
+
+Admin should be able to see registered users.
+
+Display:
+
+* User name
+* Phone number
+* Date registered
+* Number of plantation plans
+* Bills generated
+
+---
+
+# 15. ADMIN — PLAN / ORDER MANAGEMENT
+
+Admin should be able to see every user's plantation plan.
+
+Display:
+
+User name
+
+Phone number
+
+Land size
+
+Selected plants
+
+Plant quantities
+
+Subtotal
+
+Tax
+
+Additional charges
+
+Grand total
+
+Date
+
+Plan status
+
+Allow admin to update status such as:
+
+Pending
+
+Confirmed
+
+Completed
+
+---
+
+# 16. USER — FINAL SUMMARY
+
+Before generating the bill, show a beautiful final confirmation page.
+
+Title:
+
+**Your Plantation Plan**
+
+Show:
+
+User Name
+
+Phone Number
+
+Land Size
+
+Selected Plants
+
+Quantity
+
+Spacing
+
+Plant Cost
+
+Services
+
+Taxes
+
+Additional Charges
+
+Grand Total
+
+Add:
+
+**Confirm & Generate Bill**
+
+button.
+
+---
+
+# 17. PDF BILL GENERATION
+
+After confirmation, generate a professional PDF invoice/bill.
+
+The PDF should contain:
+
+ETR NURSERY logo
+
+ETR NURSERY
+
+Customer Name
+
+Phone Number
+
+Bill Number
+
+Date
+
+Land Size
+
+Plantat

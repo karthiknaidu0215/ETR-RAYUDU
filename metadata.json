@@ -1,0 +1,7 @@
+{
+  "name": "1 Acre Farm Planner",
+  "description": "Interactive 3D farm planning editor for acreage, crop zones, plants, roads, and infrastructure.",
+  "capabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
