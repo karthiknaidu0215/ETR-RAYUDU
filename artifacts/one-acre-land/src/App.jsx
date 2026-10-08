@@ -3,7 +3,7 @@ import {
   ArrowRight, Check, ChevronRight, CircleDollarSign, Download, FileText, Leaf, Library,
   LogOut, Map, MapPinned, Menu, Minus, Pencil, Plus, Receipt, Search, Settings2,
   Save, Shield, Sprout, Trash2, Truck, Users, X, TrendingUp, TrendingDown, BarChart3, Info, IndianRupee,
-  Upload,
+  Upload, Loader2, CheckCircle2, Globe,
 } from 'lucide-react'
 import PlannerWorkspace from './PlannerWorkspace'
 import { useStore } from './store'
@@ -1691,8 +1691,10 @@ function PlannerPage({ onBack, onNavigate, store }) {
   );
 }
 
-function BillPage({ state, draft, onConfirm, onNavigate }) {
-  const latest = state.bills.filter((bill) => bill.userId === state.currentUser?.id).at(-1)
+function BillPage({ state, draft, onConfirm, onNavigate, billId: explicitBillId, isAdmin }) {
+  const latest = explicitBillId
+    ? state.bills.find((bill) => bill.id === explicitBillId)
+    : (state.bills.filter((bill) => bill.userId === state.currentUser?.id).at(-1) || state.bills.at(-1))
   const confirmedPlan = latest ? state.plans.find((plan) => plan.id === latest.planId) : null
   const plan = confirmedPlan || draft
   const quote = calculatePlan(plan, state.plants, state.settings)
@@ -1703,7 +1705,13 @@ function BillPage({ state, draft, onConfirm, onNavigate }) {
   const totalAmount = latest?.totalInvestment || latest?.amount || quote.total
   const plantCost = latest?.plantCost || quote.subtotal
   const selectedAddOns = latest?.selectedAddOns || {}
-  const totalAnnualIncome = latest?.totalAnnualIncome || 0
+
+  const handleEditBill = () => {
+    if (latest?.items?.length && typeof state.updatePlanItems === 'function') {
+      state.updatePlanItems(latest.items, latest.landAcres || 1)
+    }
+    onNavigate('plan')
+  }
 
   return <PageWrap eyebrow="BILLING / CONFIRMATION" title={<>Your plantation <em>plan.</em></>} intro="A clear final check before this acre moves from screen to soil.">
     {!plan?.items?.length ? <div className="empty-state glass-card"><Receipt size={26} /><h3>No bill yet</h3><p>Build a plant shortlist and confirm the estimate to generate your first bill.</p><button className="btn-primary" onClick={() => onNavigate('catalog')}>Choose plants <ArrowRight size={14} /></button></div> : <><div className="bill-paper"><div className="bill-head"><div><div className="bill-brand"><Leaf size={17} /> ETR NURSERY</div><small>PLANTATION INTELLIGENCE</small></div><div className="bill-meta">BILL {billId}<br />{new Date().toLocaleDateString('en-IN')}<br />STATUS: {latest?.status || 'DRAFT'}</div></div><h1>Plantation plan</h1><p className="bill-intro">Prepared for {state.currentUser?.name} · {state.currentUser?.phone} · Land size: {plan.landAcres || 1} acre</p><table className="bill-table"><thead><tr><th>Plant & Size</th><th>Spacing</th><th>Unit Price</th><th>Qty</th><th>Amount</th></tr></thead><tbody>{plan.items.map((item) => { 
@@ -1761,12 +1769,6 @@ function BillPage({ state, draft, onConfirm, onNavigate }) {
           <span>Total Investment</span>
           <strong>{money(totalAmount)}</strong>
         </div>
-        {totalAnnualIncome > 0 && (
-          <div style={{ marginTop: '12px', padding: '10px 12px', background: 'rgba(39, 174, 96, 0.1)', border: '1px solid rgba(39, 174, 96, 0.3)', borderRadius: '6px', textAlign: 'right' }}>
-            <span style={{ fontSize: '10px', color: '#27ae60', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block' }}>Estimated Annual Harvest Income</span>
-            <strong style={{ fontSize: '16px', color: '#172619', fontFamily: 'var(--font-mono)' }}>{money(totalAnnualIncome)}</strong>
-          </div>
-        )}
       </div>
     </div>
     
@@ -1777,7 +1779,8 @@ function BillPage({ state, draft, onConfirm, onNavigate }) {
     <div className="bill-actions">
       {!latest && <button className="btn-primary" onClick={onConfirm}>Confirm & generate bill <Check size={14} /></button>}
       {latest && <button className="btn-primary" onClick={printBill}><Download size={14} /> Print / save as PDF</button>}
-      <button className="btn-quiet" onClick={() => onNavigate('plan')}>Edit Live Estimate</button>
+      <button className="btn-quiet" onClick={handleEditBill}><Pencil size={14} /> Edit Bill & Plans</button>
+      {isAdmin && <button className="btn-quiet" onClick={() => onNavigate('admin-orders')}>← Back to Plans & bills</button>}
     </div></>}
   </PageWrap>
 }
@@ -1785,23 +1788,67 @@ function BillPage({ state, draft, onConfirm, onNavigate }) {
 function ImageUploadField({ label = "Plant Photo / Image", value, onChange }) {
   const fileInputRef = useRef(null)
   const [error, setError] = useState('')
+  const [uploading, setUploading] = useState(false)
+  const [showUrlInput, setShowUrlInput] = useState(false)
+  const [providerInfo, setProviderInfo] = useState('')
 
-  const handleFileChange = (e) => {
+  const handleFileChange = async (e) => {
     const file = e.target.files?.[0]
     if (!file) return
     if (!file.type.startsWith('image/')) {
-      setError('Please select a valid image file (JPG, PNG, WebP).')
+      setError('Please select a valid image file (JPG, PNG, WebP, GIF, SVG).')
       return
     }
-    setError('')
-    const reader = new FileReader()
-    reader.onload = (event) => {
-      const dataUrl = event.target?.result
-      if (typeof dataUrl === 'string') {
-        onChange(dataUrl)
-      }
+    const MAX_SIZE = 10 * 1024 * 1024 // 10MB
+    if (file.size > MAX_SIZE) {
+      setError('Image file exceeds the 10MB limit.')
+      return
     }
-    reader.readAsDataURL(file)
+
+    setError('')
+    setUploading(true)
+    setProviderInfo('')
+
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      })
+
+      const data = await response.json()
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || 'Failed to upload image to persistent storage')
+      }
+
+      // Permanent public URL returned by persistent storage (Vercel Blob / Database)
+      onChange(data.url)
+      setProviderInfo(
+        data.storageProvider === 'vercel_blob'
+          ? 'Saved to Vercel Blob cloud storage'
+          : 'Saved to persistent database storage'
+      )
+    } catch (err) {
+      console.error('Image upload failed:', err)
+      // Fallback: If server endpoint is temporarily unavailable, read as DataURL with clear warning
+      try {
+        const reader = new FileReader()
+        reader.onload = (event) => {
+          const dataUrl = event.target?.result
+          if (typeof dataUrl === 'string') {
+            onChange(dataUrl)
+            setError('Note: Cloud upload unreachable. Stored local preview. Ensure backend is running.')
+          }
+        }
+        reader.readAsDataURL(file)
+      } catch (readErr) {
+        setError(err.message || 'Failed to process image.')
+      }
+    } finally {
+      setUploading(false)
+    }
   }
 
   return (
@@ -1816,6 +1863,10 @@ function ImageUploadField({ label = "Plant Photo / Image", value, onChange }) {
               src={value} 
               alt="Uploaded plant photo" 
               style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+              onError={(e) => {
+                // If broken URL, show fallback
+                e.currentTarget.style.opacity = '0.5'
+              }}
             />
           </div>
         ) : (
@@ -1824,37 +1875,74 @@ function ImageUploadField({ label = "Plant Photo / Image", value, onChange }) {
             No photo uploaded
           </div>
         )}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: 1, minWidth: '220px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: 1, minWidth: '240px' }}>
           <input 
             type="file" 
             ref={fileInputRef} 
-            accept="image/*" 
+            accept="image/png, image/jpeg, image/webp, image/gif, image/svg+xml, image/avif" 
             onChange={handleFileChange} 
             style={{ display: 'none' }} 
           />
-          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
             <button 
               type="button" 
               className="btn-outline btn-small"
+              disabled={uploading}
               onClick={() => fileInputRef.current?.click()}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', cursor: 'pointer', background: 'rgba(184, 220, 145, 0.12)', borderColor: 'var(--primary)', color: 'var(--primary)', fontWeight: 600 }}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', cursor: uploading ? 'wait' : 'pointer', background: 'rgba(184, 220, 145, 0.12)', borderColor: 'var(--primary)', color: 'var(--primary)', fontWeight: 600 }}
             >
-              <Upload size={14} />
-              {value ? 'Change Plant Photo' : 'Upload Plant Image'}
+              {uploading ? (
+                <>
+                  <Loader2 size={14} className="animate-spin" />
+                  Uploading to Cloud...
+                </>
+              ) : (
+                <>
+                  <Upload size={14} />
+                  {value ? 'Change Plant Photo' : 'Upload Plant Image'}
+                </>
+              )}
+            </button>
+            <button 
+              type="button" 
+              className="btn-quiet btn-small"
+              onClick={() => setShowUrlInput(!showUrlInput)}
+              style={{ fontSize: '11px', color: 'var(--text-muted)' }}
+            >
+              {showUrlInput ? 'Hide URL' : 'Edit URL directly'}
             </button>
             {value && (
               <button 
                 type="button" 
                 className="btn-quiet btn-small"
-                onClick={() => onChange('')}
-                style={{ color: 'var(--danger)', fontSize: '12px' }}
+                onClick={() => { onChange(''); setProviderInfo('') }}
+                style={{ color: 'var(--danger)', fontSize: '11px' }}
               >
                 Remove photo
               </button>
             )}
           </div>
+
+          {showUrlInput && (
+            <div style={{ marginTop: '4px' }}>
+              <input 
+                type="text"
+                placeholder="https://... or /api/images/..."
+                value={value || ''}
+                onChange={(e) => onChange(e.target.value)}
+                style={{ width: '100%', fontSize: '12px', padding: '6px 8px', borderRadius: '4px', background: 'rgba(0,0,0,0.4)', border: '1px solid var(--line)', color: '#fff' }}
+              />
+            </div>
+          )}
+
+          {providerInfo && (
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: '#22c55e' }}>
+              <CheckCircle2 size={12} /> {providerInfo}
+            </div>
+          )}
+
           <span style={{ fontSize: '11px', color: 'var(--text-dim)' }}>
-            Upload a real plant photograph from your device. That exact photo will be stored and used directly on the customer-facing plant card.
+            Uploaded photos are stored in permanent cloud storage and linked in the database so all users see them permanently.
           </span>
           {error && <span style={{ color: 'var(--danger)', fontSize: '11px' }}>{error}</span>}
         </div>
@@ -1863,7 +1951,8 @@ function ImageUploadField({ label = "Plant Photo / Image", value, onChange }) {
   )
 }
 
-function AdminPage({ state, activeTab, setActiveTab, onUpdatePlant, onAddPlant, onRemovePlant, onUpdateSettings, onUpdateContent, onUpdateStatus }) {
+
+function AdminPage({ state, activeTab, setActiveTab, onUpdatePlant, onAddPlant, onRemovePlant, onUpdateSettings, onUpdateContent, onUpdateStatus, onViewBill }) {
   const [newPlant, setNewPlant] = useState({ 
     name: '', 
     category: 'Fruit plants', 
@@ -2695,7 +2784,7 @@ function AdminPage({ state, activeTab, setActiveTab, onUpdatePlant, onAddPlant, 
     </>}
     {tab === 'content' && <section className="glass-card admin-panel narrow-panel"><div className="section-intro"><h3>Website language</h3><p>Keep the public ETR story aligned with the business.</p></div><div className="admin-form-grid"><AdminField label="Hero title" value={content.heroTitle} full onChange={(value) => setContent({ ...content, heroTitle: value })} /><AdminField label="Hero subtitle" value={content.heroSubtitle} full onChange={(value) => setContent({ ...content, heroSubtitle: value })} /><AdminField label="Nursery description" value={content.description} full textarea onChange={(value) => setContent({ ...content, description: value })} /><AdminField label="Services" value={content.services} full textarea onChange={(value) => setContent({ ...content, services: value })} /><AdminField label="Contact information" value={content.contact} full onChange={(value) => setContent({ ...content, contact: value })} /></div><div className="admin-actions"><button className="btn-primary" onClick={() => onUpdateContent(content)}><Check size={14} /> Save website content</button></div></section>}
     {tab === 'users' && <section className="glass-card admin-panel"><h3>Registered users</h3><DataTable headers={['Name', 'Phone', 'Registered', 'Plans']} rows={state.users.map((user) => [<strong>{user.name}</strong>, user.phone, new Date(user.registeredAt).toLocaleDateString('en-IN'), state.plans.filter((plan) => plan.userId === user.id && plan.status !== 'draft').length])} empty="No user workspaces yet." /></section>}
-    {tab === 'orders' && <section className="glass-card admin-panel"><h3>Plans & bills</h3><DataTable headers={['Bill', 'Customer', 'Amount', 'Status', 'Update']} rows={state.bills.map((bill) => { const user = state.users.find((entry) => entry.id === bill.userId); return [bill.id, user?.name || 'Guest', money(bill.amount), <span className={`status-tag ${bill.status === 'review' ? 'pending' : ''}`}>{bill.status}</span>, <select className="status-select" value={bill.status} onChange={(event) => onUpdateStatus(bill.id, event.target.value)}><option value="review">Review</option><option value="confirmed">Confirmed</option><option value="completed">Completed</option></select>] })} empty="Confirmed bills will appear here." /></section>}
+    {tab === 'orders' && <section className="glass-card admin-panel"><h3>Plans & bills</h3><DataTable headers={['Bill', 'Customer', 'Amount', 'Status', 'Update', 'Action']} rows={state.bills.map((bill) => { const user = state.users.find((entry) => entry.id === bill.userId); return [bill.id, user?.name || 'Guest', money(bill.amount), <span className={`status-tag ${bill.status === 'review' ? 'pending' : ''}`}>{bill.status}</span>, <select className="status-select" value={bill.status} onChange={(event) => onUpdateStatus(bill.id, event.target.value)}><option value="review">Review</option><option value="confirmed">Confirmed</option><option value="completed">Completed</option></select>, <button className="btn-quiet" style={{ padding: '4px 10px', fontSize: '12px', display: 'inline-flex', alignItems: 'center', gap: '4px' }} onClick={() => onViewBill?.(bill.id)}><Pencil size={12} /> View / Edit Bill</button>] })} empty="Confirmed bills will appear here." /></section>}
   </PageWrap>
 }
 
@@ -2712,10 +2801,14 @@ export default function App() {
   const [view, setView] = useState(store.currentUser ? 'dashboard' : 'landing')
   const [isAdmin, setIsAdmin] = useState(false)
   const [adminTab, setAdminTab] = useState('admin')
+  const [selectedBillId, setSelectedBillId] = useState(null)
 
   useEffect(() => { if (store.currentUser && view === 'landing') setView('dashboard') }, [store.currentUser, view])
   const draft = store.draftPlan
   const navigate = (next) => {
+    if (next === 'bill') {
+      setSelectedBillId(null)
+    }
     if (next === 'lands') {
       if (store.currentUser) {
         setView('dashboard')
@@ -2770,6 +2863,7 @@ export default function App() {
       const quote = calculatePlan(draft, store.plants, store.settings);
       store.savePlan({ ...quote, items: draft?.items || [], landAcres: 1 });
     }
+    setSelectedBillId(null);
     setView('bill');
   }
 
@@ -2778,14 +2872,14 @@ export default function App() {
   if (view === 'user-auth') return <AuthPage mode="user" onBack={() => setView('landing')} onUserLogin={userLogin} onAdminLogin={adminLogin} />
   if (view === 'admin-auth') return <AuthPage mode="admin" onBack={(next) => next ? setView(next) : setView('landing')} onUserLogin={userLogin} onAdminLogin={adminLogin} />
   if (view === 'catalog-public') return <Landing content={store.content} state={store} onToggleSelect={store.togglePlantSelection} onNavigate={navigate} />
-  if (isAdmin && view === 'admin') return <Shell admin active={adminTab} onNavigate={(next) => { setAdminTab(next); setView('admin') }} onLogout={logout}>{<AdminPage state={store} activeTab={adminTab} setActiveTab={setAdminTab} onUpdatePlant={store.updatePlant} onAddPlant={store.addPlant} onRemovePlant={store.removePlant} onUpdateSettings={store.updateSettings} onUpdateContent={store.updateContent} onUpdateStatus={(id, status) => store.patch((current) => ({ bills: current.bills.map((bill) => bill.id === id ? { ...bill, status } : bill), plans: current.plans.map((plan) => { const bill = current.bills.find((entry) => entry.id === id); return bill && plan.id === bill.planId ? { ...plan, status } : plan }) }))} />}</Shell>
+  if (isAdmin && view === 'admin') return <Shell admin active={adminTab} onNavigate={(next) => { setAdminTab(next); setView('admin') }} onLogout={logout}>{<AdminPage state={store} activeTab={adminTab} setActiveTab={setAdminTab} onUpdatePlant={store.updatePlant} onAddPlant={store.addPlant} onRemovePlant={store.removePlant} onUpdateSettings={store.updateSettings} onUpdateContent={store.updateContent} onUpdateStatus={(id, status) => store.patch((current) => ({ bills: current.bills.map((bill) => bill.id === id ? { ...bill, status } : bill), plans: current.plans.map((plan) => { const bill = current.bills.find((entry) => entry.id === id); return bill && plan.id === bill.planId ? { ...plan, status } : plan }) }))} onViewBill={(id) => { setSelectedBillId(id); setView('bill') }} />}</Shell>
   const effectiveUser = store.currentUser || { id: 'usr-karthik', name: 'Karthik Naidu', phone: '+91 98490 21212', registeredAt: '2026-01-01' }
   if (!store.currentUser && view !== 'planner') return <AuthPage mode="user" onBack={() => setView('landing')} onUserLogin={userLogin} onAdminLogin={adminLogin} />
   let page = null
   if (view === 'dashboard' || view === 'catalog') page = <Dashboard user={effectiveUser} state={store} onNavigate={navigate} />
   if (view === 'planner') page = <PlannerPage store={store} onBack={() => setView(store.currentUser ? 'dashboard' : 'landing')} onNavigate={navigate} />
   if (view === 'plan') page = <PlanPage state={store} draft={draft} onUpdateItems={store.updatePlanItems} onNavigate={navigate} onConfirm={confirmPlan} onSelectPlantSize={store.setPlantSelectedSize} />
-  if (view === 'bill') page = <BillPage state={store} draft={draft} onConfirm={confirmPlan} onNavigate={navigate} />
+  if (view === 'bill') page = <BillPage state={store} draft={draft} onConfirm={confirmPlan} onNavigate={navigate} billId={selectedBillId} isAdmin={isAdmin} />
   return <Shell user={effectiveUser} active={view === 'catalog' ? 'dashboard' : view} onNavigate={navigate} onLogout={logout}>{page}</Shell>
 }
 

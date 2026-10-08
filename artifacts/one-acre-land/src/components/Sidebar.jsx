@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react'
 import { useStore, isPointInRotatedRect } from '../store'
+import { getPlantColor } from '../constants/plantColors'
 
 export default function Sidebar({ onNavigateToLibrary }) {
   const { 
@@ -111,24 +112,28 @@ export default function Sidebar({ onNavigateToLibrary }) {
         <div>
           {availablePlants.length > 0 ? (
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '4px' }}>
-              {availablePlants.map(p => (
-                <span key={p.id} style={{
-                  background: 'rgba(255,255,255,0.06)',
-                  border: '1px solid rgba(184,220,145,0.3)',
-                  borderRadius: '4px',
-                  padding: '3px 8px',
-                  fontSize: '0.75rem',
-                  color: '#fff',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '4px'
-                }}>
-                  <strong>{p.shortName || p.name}</strong>
-                  <span style={{ color: 'var(--primary)', fontFamily: 'var(--font-mono)' }}>
-                    — {p.selectedSize || 'M'}
+              {availablePlants.map(p => {
+                const color = getPlantColor(p.shortName || p.name, libraryPlants);
+                return (
+                  <span key={p.id} style={{
+                    background: 'rgba(255,255,255,0.06)',
+                    border: `1px solid ${color}66`,
+                    borderRadius: '4px',
+                    padding: '3px 8px',
+                    fontSize: '0.75rem',
+                    color: '#fff',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px'
+                  }}>
+                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: color }} />
+                    <strong>{p.shortName || p.name}</strong>
+                    <span style={{ color: 'var(--primary)', fontFamily: 'var(--font-mono)' }}>
+                      — {p.selectedSize || 'M'}
+                    </span>
                   </span>
-                </span>
-              ))}
+                );
+              })}
             </div>
           ) : (
             <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
@@ -149,7 +154,10 @@ export default function Sidebar({ onNavigateToLibrary }) {
           <input type="number" value={borderWidth} onChange={e => setBorderWidth(Number(e.target.value))} min="0" />
         </div>
         <div className="input-row" style={{ marginTop: '10px' }}>
-          <label>Border Plant Type</label>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: getPlantColor(borderZone.type, libraryPlants) }} />
+            <label>Border Plant Type</label>
+          </div>
           <select 
             value={borderZone.type} 
             onChange={e => {
@@ -175,7 +183,8 @@ export default function Sidebar({ onNavigateToLibrary }) {
             padding: '7px 9px',
             borderRadius: '6px',
             marginTop: '8px',
-            border: '1px solid var(--border)'
+            border: '1px solid var(--border)',
+            borderLeft: `4px solid ${getPlantColor(borderZone.type, libraryPlants)}`
           }}>
             <img 
               src={borderPlantInfo.image} 
@@ -249,12 +258,16 @@ export default function Sidebar({ onNavigateToLibrary }) {
           
           // Lookup single source of truth plant details from availablePlants (selected in library)
           const zonePlantInfo = availablePlants.find(p => (p.shortName || p.name) === zone.type || p.name === zone.type) || (libraryPlants || []).find(p => (p.shortName || p.name) === zone.type || p.name === zone.type);
+          const zoneColor = getPlantColor(zone.type, libraryPlants);
 
           return (
-            <div key={zone.id} style={{ background: 'var(--bg)', padding: '10px', borderRadius: '6px', marginBottom: '10px', border: '1px solid var(--border)' }}>
+            <div key={zone.id} style={{ background: 'var(--bg)', padding: '10px', borderRadius: '6px', marginBottom: '10px', border: '1px solid var(--border)', borderLeft: `4px solid ${zoneColor}` }}>
               <div style={{ marginBottom: '10px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-                  <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Plant</label>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span style={{ width: '9px', height: '9px', borderRadius: '50%', background: zoneColor, boxShadow: `0 0 6px ${zoneColor}` }} />
+                    <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Plant Zone</label>
+                  </div>
                   <button onClick={() => removeCropZone(zone.id)} className="btn btn-secondary" style={{ padding: '2px 8px', fontSize: '0.75rem', width: 'auto' }}>Remove</button>
                 </div>
                 <select 

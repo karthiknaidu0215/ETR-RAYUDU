@@ -1,5 +1,5 @@
 import { useStore, isPointInRotatedRect } from '../store'
-import { CROP_COLORS } from './Stats'
+import { getPlantColor } from '../constants/plantColors'
 import { Html, Line } from '@react-three/drei'
 import * as THREE from 'three'
 import { useMemo, useState } from 'react'
@@ -9,7 +9,8 @@ function Plant({ plant, allPlants, dimmed }) {
     selectedPlantId, setSelectedPlantId, 
     draggingPlantId, setDraggingPlantId,
     measuring, addMeasurePoint,
-    removePlant, duplicatePlant
+    removePlant, duplicatePlant,
+    libraryPlants
   } = useStore()
   
   const [showDistance, setShowDistance] = useState(false);
@@ -53,8 +54,9 @@ function Plant({ plant, allPlants, dimmed }) {
     opacity: dimmed ? 0.3 : 1
   }
 
+  const baseColor = plant.color || getPlantColor(plant.type || plant.name || plant.id, libraryPlants);
+
   const renderPlantShape = () => {
-    const baseColor = CROP_COLORS[plant.type] || CROP_COLORS.default;
     const selectedColor = '#ffffff';
     const trunkColor = '#3f2a14'; // Dark organic bark
 
@@ -82,7 +84,12 @@ function Plant({ plant, allPlants, dimmed }) {
           {/* Dense, wide, rounded canopy */}
           <mesh position={[0, 6.5, 0]} castShadow receiveShadow={!dimmed}>
             <dodecahedronGeometry args={[3.5, 2]} />
-            <meshStandardMaterial color={isSelected ? selectedColor : baseColor} {...leafProps} emissive={isSelected ? baseColor : '#000000'} emissiveIntensity={isSelected ? 0.3 : 0} />
+            <meshStandardMaterial 
+              color={isSelected ? selectedColor : baseColor} 
+              {...leafProps} 
+              emissive={isSelected ? '#ffffff' : baseColor} 
+              emissiveIntensity={isSelected ? 0.45 : 0.22} 
+            />
           </mesh>
         </>
       )
@@ -93,11 +100,16 @@ function Plant({ plant, allPlants, dimmed }) {
         <>
           <mesh position={[0, 2.5, 0]} castShadow receiveShadow={!dimmed}>
             <cylinderGeometry args={[0.5, 0.7, 5, 8]} />
-            <meshStandardMaterial color="#65a30d" {...leafProps} />
+            <meshStandardMaterial color={trunkColor} {...barkProps} />
           </mesh>
           <mesh position={[0, 6, 0]} castShadow receiveShadow={!dimmed}>
             <coneGeometry args={[3, 8, 5]} />
-            <meshStandardMaterial color={isSelected ? selectedColor : baseColor} {...leafProps} emissive={isSelected ? baseColor : '#000000'} emissiveIntensity={isSelected ? 0.3 : 0} />
+            <meshStandardMaterial 
+              color={isSelected ? selectedColor : baseColor} 
+              {...leafProps} 
+              emissive={isSelected ? '#ffffff' : baseColor} 
+              emissiveIntensity={isSelected ? 0.45 : 0.22} 
+            />
           </mesh>
         </>
       )
@@ -112,7 +124,12 @@ function Plant({ plant, allPlants, dimmed }) {
           </mesh>
           <mesh position={[0, 14.5, 0]} castShadow receiveShadow={!dimmed}>
             <dodecahedronGeometry args={[2.2, 1]} />
-            <meshStandardMaterial color={isSelected ? selectedColor : baseColor} {...leafProps} emissive={isSelected ? baseColor : '#000000'} emissiveIntensity={isSelected ? 0.3 : 0} />
+            <meshStandardMaterial 
+              color={isSelected ? selectedColor : baseColor} 
+              {...leafProps} 
+              emissive={isSelected ? '#ffffff' : baseColor} 
+              emissiveIntensity={isSelected ? 0.45 : 0.22} 
+            />
           </mesh>
         </>
       )
@@ -127,7 +144,12 @@ function Plant({ plant, allPlants, dimmed }) {
           </mesh>
           <mesh position={[0, 4.5, 0]} castShadow receiveShadow={!dimmed}>
             <dodecahedronGeometry args={[3, 1]} />
-            <meshStandardMaterial color={isSelected ? selectedColor : baseColor} {...leafProps} emissive={isSelected ? baseColor : '#000000'} emissiveIntensity={isSelected ? 0.3 : 0} />
+            <meshStandardMaterial 
+              color={isSelected ? selectedColor : baseColor} 
+              {...leafProps} 
+              emissive={isSelected ? '#ffffff' : baseColor} 
+              emissiveIntensity={isSelected ? 0.45 : 0.22} 
+            />
           </mesh>
         </>
       )
@@ -142,7 +164,12 @@ function Plant({ plant, allPlants, dimmed }) {
           </mesh>
           <mesh position={[0, 5.5, 0]} castShadow receiveShadow={!dimmed}>
             <dodecahedronGeometry args={[2.8, 2]} />
-            <meshStandardMaterial color={isSelected ? selectedColor : baseColor} {...leafProps} emissive={isSelected ? baseColor : '#000000'} emissiveIntensity={isSelected ? 0.3 : 0} />
+            <meshStandardMaterial 
+              color={isSelected ? selectedColor : baseColor} 
+              {...leafProps} 
+              emissive={isSelected ? '#ffffff' : baseColor} 
+              emissiveIntensity={isSelected ? 0.45 : 0.22} 
+            />
           </mesh>
         </>
       )
@@ -157,7 +184,12 @@ function Plant({ plant, allPlants, dimmed }) {
           </mesh>
           <mesh position={[0, 12, 0]} scale={[1, 0.6, 1]} castShadow receiveShadow={!dimmed}>
             <dodecahedronGeometry args={[4, 1]} />
-            <meshStandardMaterial color={isSelected ? selectedColor : baseColor} {...leafProps} emissive={isSelected ? baseColor : '#000000'} emissiveIntensity={isSelected ? 0.3 : 0} />
+            <meshStandardMaterial 
+              color={isSelected ? selectedColor : baseColor} 
+              {...leafProps} 
+              emissive={isSelected ? '#ffffff' : baseColor} 
+              emissiveIntensity={isSelected ? 0.45 : 0.22} 
+            />
           </mesh>
         </>
       )
@@ -172,7 +204,12 @@ function Plant({ plant, allPlants, dimmed }) {
           </mesh>
           <mesh position={[0, 7, 0]} castShadow receiveShadow={!dimmed}>
             <dodecahedronGeometry args={[2.5, 1]} />
-            <meshStandardMaterial color={isSelected ? selectedColor : baseColor} {...leafProps} emissive={isSelected ? baseColor : '#000000'} emissiveIntensity={isSelected ? 0.3 : 0} />
+            <meshStandardMaterial 
+              color={isSelected ? selectedColor : baseColor} 
+              {...leafProps} 
+              emissive={isSelected ? '#ffffff' : baseColor} 
+              emissiveIntensity={isSelected ? 0.45 : 0.22} 
+            />
           </mesh>
         </>
       )
@@ -187,7 +224,12 @@ function Plant({ plant, allPlants, dimmed }) {
           </mesh>
           <mesh position={[0, 2.5, 0]} castShadow receiveShadow={!dimmed}>
             <sphereGeometry args={[1.8, 8, 8]} />
-            <meshStandardMaterial color={isSelected ? selectedColor : baseColor} {...leafProps} emissive={isSelected ? baseColor : '#000000'} emissiveIntensity={isSelected ? 0.3 : 0} />
+            <meshStandardMaterial 
+              color={isSelected ? selectedColor : baseColor} 
+              {...leafProps} 
+              emissive={isSelected ? '#ffffff' : baseColor} 
+              emissiveIntensity={isSelected ? 0.45 : 0.22} 
+            />
           </mesh>
         </>
       )
@@ -202,7 +244,12 @@ function Plant({ plant, allPlants, dimmed }) {
         </mesh>
         <mesh position={[0, 14, 0]} castShadow receiveShadow={!dimmed}>
           <coneGeometry args={[3, 8, 7]} />
-          <meshStandardMaterial color={isSelected ? selectedColor : baseColor} {...leafProps} emissive={isSelected ? baseColor : '#000000'} emissiveIntensity={isSelected ? 0.3 : 0} />
+          <meshStandardMaterial 
+            color={isSelected ? selectedColor : baseColor} 
+            {...leafProps} 
+            emissive={isSelected ? '#ffffff' : baseColor} 
+            emissiveIntensity={isSelected ? 0.45 : 0.22} 
+          />
         </mesh>
       </>
     )
@@ -212,6 +259,16 @@ function Plant({ plant, allPlants, dimmed }) {
 
   return (
     <group position={[plant.x, 0, plant.z]}>
+      {/* Ground color identifier disc matching this specific plant's distinct color */}
+      <mesh position={[0, 0.06, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+        <circleGeometry args={[2.2, 24]} />
+        <meshBasicMaterial color={baseColor} transparent opacity={0.82} side={THREE.DoubleSide} />
+      </mesh>
+      <mesh position={[0, 0.07, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[2.0, 2.3, 24]} />
+        <meshBasicMaterial color={baseColor} side={THREE.DoubleSide} />
+      </mesh>
+
       {isSelected && (
         <mesh position={[0, 0.1, 0]} rotation={[-Math.PI/2, 0, 0]}>
           <ringGeometry args={[2, 2.5, 32]} />
@@ -222,8 +279,11 @@ function Plant({ plant, allPlants, dimmed }) {
       {isSelected && (
         <Html position={[0, 14, 0]} center zIndexRange={[100, 0]}>
           {isBorderPlant ? (
-            <div className="cad-toolbar" onPointerDown={e => e.stopPropagation()}>
-              <div className="cad-toolbar-header">BORDER {plant.type.toUpperCase()}</div>
+            <div className="cad-toolbar" onPointerDown={e => e.stopPropagation()} style={{ borderTop: `4px solid ${baseColor}` }}>
+              <div className="cad-toolbar-header" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: baseColor, display: 'inline-block' }} />
+                BORDER {plant.type.toUpperCase()}
+              </div>
               
               <div style={{display:'flex', gap:'5px', flexDirection:'column'}}>
                 <button 
@@ -254,8 +314,11 @@ function Plant({ plant, allPlants, dimmed }) {
               </div>
             </div>
           ) : (
-            <div className="info-card">
-              <h4>{plant.type}</h4>
+            <div className="info-card" style={{ borderLeft: `4px solid ${baseColor}` }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
+                <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: baseColor, display: 'inline-block' }} />
+                <h4 style={{ margin: 0, color: baseColor }}>{plant.type}</h4>
+              </div>
               <div className="info-row"><span>ID</span><span>{plant.id.substring(0,6)}</span></div>
               {nearestPlant && (
                 <div className="info-row"><span>Nearest Distance</span><span>{nearestPlant.dist.toFixed(1)} ft</span></div>

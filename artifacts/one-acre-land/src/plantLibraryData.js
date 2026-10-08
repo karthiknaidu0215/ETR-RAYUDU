@@ -76,7 +76,7 @@ export const DEFAULT_PLANT_LIBRARY = [
     maintenance: 'Low',
     growth: '12–15 years',
     description: 'A patient long-term asset with strong timber value and quiet presence.',
-    color: '#7f8c8d',
+    color: '#78716c',
     image: 'https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=800&q=80',
   },
   {
@@ -95,7 +95,7 @@ export const DEFAULT_PLANT_LIBRARY = [
     maintenance: 'Low',
     growth: '5–6 years',
     description: 'A resilient boundary and plantation staple for warm, open acreage.',
-    color: '#16a085',
+    color: '#0284c7',
     image: 'https://images.unsplash.com/photo-1544644181-1484b3fdfc62?auto=format&fit=crop&w=800&q=80',
   },
   {
@@ -114,7 +114,7 @@ export const DEFAULT_PLANT_LIBRARY = [
     maintenance: 'High',
     growth: '5–7 years',
     description: 'Tall, elegant palms that reward careful irrigation and a considered grid.',
-    color: '#27ae60',
+    color: '#059669',
     image: 'https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=800&q=80',
   },
   {
@@ -133,7 +133,7 @@ export const DEFAULT_PLANT_LIBRARY = [
     maintenance: 'Moderate',
     growth: '3–4 years',
     description: 'Bright citrus with a measured canopy, ideal for mixed orchard plans.',
-    color: '#2980b9',
+    color: '#2563eb',
     image: 'https://images.unsplash.com/photo-1582281298055-e25b84a30b0b?auto=format&fit=crop&w=800&q=80',
   },
   {
@@ -152,7 +152,7 @@ export const DEFAULT_PLANT_LIBRARY = [
     maintenance: 'High',
     growth: '10–12 months',
     description: 'Fast-turning, productive plants for a first harvest while the orchard matures.',
-    color: '#f1c40f',
+    color: '#eab308',
     image: 'https://images.unsplash.com/photo-1571771894821-ce9b6c11b08e?auto=format&fit=crop&w=800&q=80',
   },
   {
@@ -171,7 +171,7 @@ export const DEFAULT_PLANT_LIBRARY = [
     maintenance: 'Low',
     growth: '8–10 months',
     description: 'A versatile, fast-growing utility crop for the working edge of a plan.',
-    color: '#78b582',
+    color: '#84cc16',
     image: 'https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?auto=format&fit=crop&w=800&q=80',
   },
   {
@@ -190,7 +190,7 @@ export const DEFAULT_PLANT_LIBRARY = [
     maintenance: 'Moderate',
     growth: '12–18 months',
     description: 'A fragrant flowering layer for pathways, entries, and living garden edges.',
-    color: '#d7c7a1',
+    color: '#ec4899',
     image: 'https://images.unsplash.com/photo-1508610048659-a06b669e3321?auto=format&fit=crop&w=800&q=80',
   },
 ];

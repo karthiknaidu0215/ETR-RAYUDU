@@ -2,8 +2,9 @@ import { useEffect, useState } from 'react'
 import { v4 as uuidv4 } from 'uuid'
 import { useStore, isPointInRotatedRect } from './store'
 import { defaultPlants, initialSelectedPlantIds, PLANT_SIZES, getPlantSizePrices, getPlantSizeImage, getPlantSizeDetails, getPlantSizeAvailability, isPlantSizeAvailable, INDIAN_MACRO_CONTEXT, getPlantHistoricalData } from './plantsData'
+import { getPlantColor } from './constants/plantColors'
 
-export { defaultPlants, initialSelectedPlantIds, PLANT_SIZES, getPlantSizePrices, getPlantSizeImage, getPlantSizeDetails, getPlantSizeAvailability, isPlantSizeAvailable, INDIAN_MACRO_CONTEXT, getPlantHistoricalData }
+export { defaultPlants, initialSelectedPlantIds, PLANT_SIZES, getPlantSizePrices, getPlantSizeImage, getPlantSizeDetails, getPlantSizeAvailability, isPlantSizeAvailable, INDIAN_MACRO_CONTEXT, getPlantHistoricalData, getPlantColor }
 
 const KEY = 'etr-nursery-prototype'
 
@@ -155,7 +156,8 @@ function readState() {
             expectedYieldPerPlant,
             expectedSellingPricePerKg,
             harvestsPerYear,
-            yieldUnit
+            yieldUnit,
+            color: getPlantColor(p.shortName || p.name || p.id, defaultPlants)
           } : {
             ...p,
             image,
@@ -166,7 +168,8 @@ function readState() {
             expectedYieldPerPlant,
             expectedSellingPricePerKg,
             harvestsPerYear,
-            yieldUnit
+            yieldUnit,
+            color: getPlantColor(p.shortName || p.name || p.id, defaultPlants)
           }
         })
 
@@ -224,6 +227,46 @@ function readState() {
 export function useETRStore() {
   const [state, setState] = useState(readState)
 
+  // 1. On mount: Fetch latest persistent state & plants from backend database
+  useEffect(() => {
+    let active = true
+    fetch('/api/state')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.success && data.state && active) {
+          setState((current) => {
+            const backendPlants = Array.isArray(data.state.plants) ? data.state.plants : []
+            if (!backendPlants.length) return current
+
+            // Merge backend plants with local plants, keeping persistent image URLs
+            const merged = [...current.plants]
+            backendPlants.forEach((bp) => {
+              const idx = merged.findIndex((p) => p.id === bp.id)
+              if (idx >= 0) {
+                merged[idx] = { ...merged[idx], ...bp }
+              } else {
+                merged.push(bp)
+              }
+            })
+
+            return {
+              ...current,
+              plants: merged,
+              bills: data.state.bills?.length ? data.state.bills : current.bills,
+              settings: data.state.settings ? { ...current.settings, ...data.state.settings } : current.settings,
+              content: data.state.content ? { ...current.content, ...data.state.content } : current.content,
+            }
+          })
+        }
+      })
+      .catch((err) => console.warn('Could not sync initial state from backend:', err))
+
+    return () => {
+      active = false
+    }
+  }, [])
+
+  // 2. On change: Save to localStorage and sync to backend database
   useEffect(() => {
     try {
       localStorage.setItem(KEY, JSON.stringify(state))
@@ -239,6 +282,17 @@ export function useETRStore() {
     } catch (err) {
       console.warn('Sync with library deferred:', err)
     }
+
+    // Debounced sync to backend PostgreSQL / persistent state
+    const timer = setTimeout(() => {
+      fetch('/api/state', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ state }),
+      }).catch((err) => console.warn('Background state sync to server:', err))
+    }, 600)
+
+    return () => clearTimeout(timer)
   }, [state])
 
   const patch = (updates) => setState((current) => ({
@@ -547,7 +601,7 @@ export function useETRStore() {
       yieldUnit: plant.yieldUnit || 'kg',
       expectedSellingPricePerKg: Number(plant.expectedSellingPricePerKg || 0),
       harvestsPerYear: Number(plant.harvestsPerYear || 1),
-      color: plant.color || '#98bf77'
+      color: plant.color ? getPlantColor(plant.color) : getPlantColor(plant.shortName || plant.name || plant.id)
     }
     return {
       plants: [...current.plants, newPlant],

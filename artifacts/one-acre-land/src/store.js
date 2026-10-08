@@ -1,8 +1,63 @@
 import { create } from 'zustand';
 import { v4 as uuidv4 } from 'uuid';
 import { defaultPlants, initialSelectedPlantIds } from './plantsData';
+import { getPlantColor } from './constants/plantColors';
 
 const ACRE_SQ_FT = 43560;
+
+export const generateAutoPlantsForZonesAndBorder = (zones, borderType, landSideFt, borderWidth, libraryPlants) => {
+  const newPlants = [];
+
+  // 1. Arrange each crop zone
+  (zones || []).forEach((zone) => {
+    const p2p = zone.p2p || 15;
+    const r2r = zone.r2r || 15;
+    const maxCols = Math.floor(zone.block.width / p2p);
+    const maxRows = Math.floor(zone.block.length / r2r);
+    const target = zone.targetPlants > 0 ? zone.targetPlants : (maxCols * maxRows);
+
+    const startX = zone.block.minX + (p2p / 2);
+    const startZ = zone.block.minZ + (r2r / 2);
+    const zoneColor = getPlantColor(zone.type, libraryPlants);
+
+    let count = 0;
+    for (let r = 0; r < maxRows; r++) {
+      for (let c = 0; c < maxCols; c++) {
+        if (count >= target) break;
+        newPlants.push({
+          id: uuidv4(),
+          zoneId: zone.id,
+          type: zone.type,
+          color: zoneColor,
+          x: startX + (c * p2p),
+          z: startZ + (r * r2r)
+        });
+        count++;
+      }
+      if (count >= target) break;
+    }
+  });
+
+  // 2. Arrange border zone
+  if (borderType && borderWidth > 0) {
+    const spacing = 20; // 20ft spacing along perimeter
+    const halfL = landSideFt / 2;
+    const offset = borderWidth / 2;
+    const edge = halfL - offset;
+    const steps = Math.floor(landSideFt / spacing);
+    const borderColor = getPlantColor(borderType, libraryPlants);
+
+    for (let i = 0; i < steps; i++) {
+      const pos = -halfL + (i * spacing) + (spacing / 2);
+      newPlants.push({ id: uuidv4(), zoneId: 'border-zone', type: borderType, color: borderColor, x: pos, z: -edge });
+      newPlants.push({ id: uuidv4(), zoneId: 'border-zone', type: borderType, color: borderColor, x: pos, z: edge });
+      newPlants.push({ id: uuidv4(), zoneId: 'border-zone', type: borderType, color: borderColor, x: -edge, z: pos });
+      newPlants.push({ id: uuidv4(), zoneId: 'border-zone', type: borderType, color: borderColor, x: edge, z: pos });
+    }
+  }
+
+  return newPlants;
+};
 
 const calculateBlocks = (acres, borderWidth, cropZones) => {
   const totalSqFt = acres * ACRE_SQ_FT;
@@ -55,7 +110,18 @@ export const getInfraArea = (infra) => {
   return infra.width * infra.length;
 }
 
-const initialCalculations = calculateBlocks(1, 10, []);
+const defaultInitCrops = [
+  { id: 'zone-mango', type: 'Mango', percentage: 50, p2p: 24, r2r: 24, targetPlants: 36 },
+  { id: 'zone-guava', type: 'Guava', percentage: 50, p2p: 15, r2r: 15, targetPlants: 95 }
+];
+const initialCalculations = calculateBlocks(1, 10, defaultInitCrops);
+const initialPlants = generateAutoPlantsForZonesAndBorder(
+  initialCalculations.zones,
+  'Teak',
+  initialCalculations.landSide,
+  10,
+  defaultPlants
+);
 
 export const useStore = create((set, get) => ({
   landAcres: 1, 
@@ -98,6 +164,8 @@ export const useStore = create((set, get) => ({
 
     // Keep crop zone types aligned with shortlisted plants if available
     let updatedCropZones = state.cropZones;
+    let updatedPlants = state.plants;
+
     if (available.length > 0 && updatedCropZones.length > 0) {
       updatedCropZones = updatedCropZones.map(zone => {
         const isStillAvailable = available.some(p => (p.shortName || p.name) === zone.type || p.name === zone.type);
@@ -112,6 +180,29 @@ export const useStore = create((set, get) => ({
         }
         return zone;
       });
+      // Ensure all existing plants have their color assigned
+      updatedPlants = updatedPlants.map(p => ({
+        ...p,
+        color: p.color || getPlantColor(p.type, updatedLibrary)
+      }));
+    } else if (available.length > 0 && updatedCropZones.length === 0) {
+      // Auto-initialize crop zones and plants if none exist
+      const percPerCrop = Math.floor(100 / available.length);
+      const remainder = 100 - (percPerCrop * available.length);
+      const newCropZones = available.map((plant, index) => {
+        const perc = index === 0 ? (percPerCrop + remainder) : percPerCrop;
+        return {
+          id: uuidv4(),
+          type: plant.shortName || plant.name,
+          percentage: perc,
+          p2p: plant.p2p || 15,
+          r2r: plant.r2r || 15,
+          targetPlants: plant.plantsPerAcre ? Math.round(plant.plantsPerAcre * (perc / 100)) : 0
+        };
+      });
+      const { zones } = calculateBlocks(state.landAcres, state.borderWidth, newCropZones);
+      updatedCropZones = zones;
+      updatedPlants = generateAutoPlantsForZonesAndBorder(zones, borderType, state.landSideFt, state.borderWidth, updatedLibrary);
     }
     
     return {
@@ -119,7 +210,8 @@ export const useStore = create((set, get) => ({
       selectedPlantIds: updatedSelectedIds,
       selectedPlantSizes: updatedSelectedSizes,
       borderZone: { ...state.borderZone, type: borderType },
-      cropZones: updatedCropZones
+      cropZones: updatedCropZones,
+      plants: updatedPlants
     };
   }),
 
@@ -162,16 +254,17 @@ export const useStore = create((set, get) => ({
     });
     
     const { zones, interiorArea, borderArea } = calculateBlocks(state.landAcres, state.borderWidth, newCropZones);
+    const newPlants = generateAutoPlantsForZonesAndBorder(zones, borderType, state.landSideFt, state.borderWidth, updatedLibrary);
     
     return {
       libraryPlants: updatedLibrary,
       selectedPlantIds: updatedSelectedIds,
       selectedPlantSizes: updatedSelectedSizes,
-      borderZone: { ...state.borderZone, type: borderType },
+      borderZone: { ...state.borderZone, type: borderType, targetPlants: newPlants.filter(p => p.zoneId === 'border-zone').length },
       cropZones: zones,
       interiorAreaSqFt: interiorArea,
       borderAreaSqFt: borderArea,
-      plants: [] // Reset plant placements to populate with new zones
+      plants: newPlants // Pre-populate visualization with distinct colored plants!
     };
   }),
 
@@ -213,10 +306,10 @@ export const useStore = create((set, get) => ({
       .filter(p => p.isAvailable);
   },
 
-  cropZones: [],  
-  borderZone: { id: 'border-zone', type: 'Mango', targetPlants: 0 },
+  cropZones: initialCalculations.zones,  
+  borderZone: { id: 'border-zone', type: 'Teak', targetPlants: initialPlants.filter(p => p.zoneId === 'border-zone').length },
   
-  plants: [], // All placed/intended plants
+  plants: initialPlants, // Populated with distinct colored plants!
   selectedPlantId: null,
   draggingPlantId: null,
   measuring: false,
@@ -417,10 +510,13 @@ export const useStore = create((set, get) => ({
       type = zone.type;
     }
 
+    const plantColor = getPlantColor(type, state.libraryPlants);
+
     const newPlant = {
       id: uuidv4(),
       zoneId,
       type,
+      color: plantColor,
       x,
       z
     };
@@ -443,6 +539,7 @@ export const useStore = create((set, get) => ({
     
     const startX = zone.block.minX + (zone.p2p / 2);
     const startZ = zone.block.minZ + (zone.r2r / 2);
+    const zoneColor = getPlantColor(zone.type, state.libraryPlants);
     
     for (let r = 0; r < maxRows; r++) {
       for (let c = 0; c < maxCols; c++) {
@@ -451,6 +548,7 @@ export const useStore = create((set, get) => ({
           id: uuidv4(),
           zoneId,
           type: zone.type,
+          color: zoneColor,
           x: startX + (c * zone.p2p),
           z: startZ + (r * zone.r2r)
         });
@@ -472,13 +570,14 @@ export const useStore = create((set, get) => ({
     const edge = halfL - offset;
     
     const steps = Math.floor(state.landSideFt / spacing);
+    const borderColor = getPlantColor(state.borderZone.type, state.libraryPlants);
     
     for (let i = 0; i < steps; i++) {
       const pos = -halfL + (i * spacing) + (spacing / 2);
-      newPlants.push({ id: uuidv4(), zoneId: 'border-zone', type: state.borderZone.type, x: pos, z: -edge });
-      newPlants.push({ id: uuidv4(), zoneId: 'border-zone', type: state.borderZone.type, x: pos, z: edge });
-      newPlants.push({ id: uuidv4(), zoneId: 'border-zone', type: state.borderZone.type, x: -edge, z: pos });
-      newPlants.push({ id: uuidv4(), zoneId: 'border-zone', type: state.borderZone.type, x: edge, z: pos });
+      newPlants.push({ id: uuidv4(), zoneId: 'border-zone', type: state.borderZone.type, color: borderColor, x: pos, z: -edge });
+      newPlants.push({ id: uuidv4(), zoneId: 'border-zone', type: state.borderZone.type, color: borderColor, x: pos, z: edge });
+      newPlants.push({ id: uuidv4(), zoneId: 'border-zone', type: state.borderZone.type, color: borderColor, x: -edge, z: pos });
+      newPlants.push({ id: uuidv4(), zoneId: 'border-zone', type: state.borderZone.type, color: borderColor, x: edge, z: pos });
     }
     
     return { plants: [...otherPlants, ...newPlants] };

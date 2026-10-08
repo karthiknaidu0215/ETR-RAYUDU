@@ -1,29 +1,8 @@
 import { useMemo } from 'react'
 import { useStore, isPointInRotatedRect, getInfraArea } from '../store'
+import { getPlantColor, CROP_COLORS } from '../constants/plantColors'
 
-// Professional unique color per crop type
-export const CROP_COLORS = {
-  'Mango':    '#e67e22',
-  'Kesar Mango': '#e67e22',
-  'Banana':   '#f1c40f',
-  'Grand Naine Banana': '#f1c40f',
-  'Arecanut': '#27ae60',
-  'Arecanut Premium': '#27ae60',
-  'Coconut':  '#16a085',
-  'Tall Coconut': '#16a085',
-  'Guava':    '#8e44ad',
-  'Allahabad Guava': '#8e44ad',
-  'Mosambi':  '#2980b9',
-  'Sweet Mosambi': '#2980b9',
-  'Timber':   '#7f8c8d',
-  'Teak':     '#7f8c8d',
-  'Teak Sapling': '#7f8c8d',
-  'Moringa':  '#78b582',
-  'Jasmine':  '#d7c7a1',
-  'Star Jasmine': '#d7c7a1',
-  'Border':   '#d35400',
-  'default':  '#1abc9c',
-}
+export { CROP_COLORS }
 
 function Row({ label, value, color, sub, bold, top, danger }) {
   return (
@@ -70,7 +49,7 @@ function SectionHeader({ title }) {
 }
 
 export default function Stats() {
-  const { landAcres, borderAreaSqFt, cropZones, borderZone, plants, infrastructure } = useStore()
+  const { landAcres, borderAreaSqFt, cropZones, borderZone, plants, infrastructure, libraryPlants } = useStore()
 
   const stats = useMemo(() => {
     let visiblePlants = [];
@@ -181,13 +160,14 @@ export default function Stats() {
       <Row label="Interior Total" value={fmt(interiorAreaSqFt)} color="#2980b9" bold />
       {cropZones.map(z => {
         const count = stats.visiblePlants.filter(p => p.zoneId === z.id).length;
+        const color = getPlantColor(z.type, libraryPlants);
         return (
           <Row
             key={z.id}
             label={`${z.type} Zone (${z.percentage}%) • ${count} Plants`}
             value={fmt(z.block?.area || 0)}
             sub
-            color={CROP_COLORS[z.type] || CROP_COLORS.default}
+            color={color}
           />
         );
       })}

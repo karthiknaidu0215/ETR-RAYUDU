@@ -1,12 +1,12 @@
 import { useStore, isPointInRotatedRect } from '../store'
-import { CROP_COLORS } from './Stats'
+import { getPlantColor, CROP_COLORS } from '../constants/plantColors'
 import * as THREE from 'three'
 import { Html } from '@react-three/drei'
 import { useMemo } from 'react'
 
 export default function Ground() {
   const { 
-    landSideFt, interiorSideFt, cropZones, 
+    landSideFt, interiorSideFt, cropZones, borderZone, libraryPlants,
     draggingPlantId, setDraggingPlantId, updatePlantPosition, 
     plants, manualPlacementZoneId, placeManualPlant,
     activeDrawTool, draftRoad, setDraftRoad, addDrawnRoad,
@@ -157,6 +157,9 @@ export default function Ground() {
   const outerBoundaryGeom = useMemo(() => new THREE.PlaneGeometry(landSideFt, landSideFt), [landSideFt])
   const innerBoundaryGeom = useMemo(() => new THREE.PlaneGeometry(interiorSideFt, interiorSideFt), [interiorSideFt])
 
+  const borderColor = getPlantColor(borderZone?.type || 'Teak', libraryPlants)
+  const borderWidthFt = (landSideFt - interiorSideFt) / 2
+
   return (
     <group>
       {/* Realistic Grass / Soil Base */}
@@ -172,23 +175,49 @@ export default function Ground() {
         <planeGeometry args={[landSideFt, landSideFt]} />
         <meshStandardMaterial color="#425035" roughness={1} metalness={0} />
       </mesh>
+
+      {/* Boundary Strip (Perimeter Buffer) Tinted in Border Plant's Distinct Color */}
+      {borderWidthFt > 0 && (
+        <group>
+          {/* North strip */}
+          <mesh position={[0, 0.015, -(landSideFt / 2 - borderWidthFt / 2)]} rotation={[-Math.PI / 2, 0, 0]}>
+            <planeGeometry args={[landSideFt, borderWidthFt]} />
+            <meshStandardMaterial color={borderColor} transparent opacity={0.32} roughness={0.9} />
+          </mesh>
+          {/* South strip */}
+          <mesh position={[0, 0.015, (landSideFt / 2 - borderWidthFt / 2)]} rotation={[-Math.PI / 2, 0, 0]}>
+            <planeGeometry args={[landSideFt, borderWidthFt]} />
+            <meshStandardMaterial color={borderColor} transparent opacity={0.32} roughness={0.9} />
+          </mesh>
+          {/* West strip */}
+          <mesh position={[-(landSideFt / 2 - borderWidthFt / 2), 0.015, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+            <planeGeometry args={[borderWidthFt, interiorSideFt]} />
+            <meshStandardMaterial color={borderColor} transparent opacity={0.32} roughness={0.9} />
+          </mesh>
+          {/* East strip */}
+          <mesh position={[(landSideFt / 2 - borderWidthFt / 2), 0.015, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+            <planeGeometry args={[borderWidthFt, interiorSideFt]} />
+            <meshStandardMaterial color={borderColor} transparent opacity={0.32} roughness={0.9} />
+          </mesh>
+        </group>
+      )}
       
       {/* Physical Outer Boundary (Wooden Fence / Berm) */}
       <mesh position={[0, 0.5, landSideFt/2]}>
         <boxGeometry args={[landSideFt, 1, 1]} />
-        <meshStandardMaterial color="#5c4033" roughness={0.9} />
+        <meshStandardMaterial color={borderColor} roughness={0.8} />
       </mesh>
       <mesh position={[0, 0.5, -landSideFt/2]}>
         <boxGeometry args={[landSideFt, 1, 1]} />
-        <meshStandardMaterial color="#5c4033" roughness={0.9} />
+        <meshStandardMaterial color={borderColor} roughness={0.8} />
       </mesh>
       <mesh position={[landSideFt/2, 0.5, 0]}>
         <boxGeometry args={[1, 1, landSideFt]} />
-        <meshStandardMaterial color="#5c4033" roughness={0.9} />
+        <meshStandardMaterial color={borderColor} roughness={0.8} />
       </mesh>
       <mesh position={[-landSideFt/2, 0.5, 0]}>
         <boxGeometry args={[1, 1, landSideFt]} />
-        <meshStandardMaterial color="#5c4033" roughness={0.9} />
+        <meshStandardMaterial color={borderColor} roughness={0.8} />
       </mesh>
 
       {/* Subtle Inner Boundary (Tilled edge) */}
@@ -212,7 +241,7 @@ export default function Ground() {
       {cropZones.map(zone => {
         const isSelected = selectedCropZoneId === zone.id;
         const placedCount = visiblePlants.filter(p => p.zoneId === zone.id).length;
-        const cropColor = CROP_COLORS[zone.type] || CROP_COLORS.default;
+        const cropColor = getPlantColor(zone.type, libraryPlants);
         
         return (
           <group 
@@ -220,31 +249,81 @@ export default function Ground() {
             position={[zone.block.x, 0.02, zone.block.z]}
             onClick={(e) => { e.stopPropagation(); setSelectedCropZoneId(zone.id); }}
           >
+            {/* Distinct Colored Agricultural Crop Bed */}
             <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
               <planeGeometry args={[zone.block.width - 2, zone.block.length - 2]} />
               <meshStandardMaterial 
-                color={isSelected ? cropColor : '#3e2723'} 
-                roughness={1} 
-                transparent={isSelected} 
-                opacity={isSelected ? 0.6 : 1}
+                color={cropColor} 
+                roughness={0.8} 
+                transparent={true} 
+                opacity={isSelected ? 0.68 : 0.38}
               />
             </mesh>
-            {/* Tilled soil rows (subtle lines) */}
-            <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.05, 0]} receiveShadow>
+
+            {/* Distinct Zone Wireframe Grid / Tilled Rows */}
+            <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.03, 0]} receiveShadow>
               <planeGeometry args={[zone.block.width - 2, zone.block.length - 2]} />
               <meshStandardMaterial 
-                color="#2d1a11" 
-                roughness={1} 
+                color={cropColor} 
+                roughness={0.9} 
                 wireframe={true} 
-                transparent opacity={0.15}
+                transparent={true} 
+                opacity={isSelected ? 0.85 : 0.5}
               />
             </mesh>
+
+            {/* Zone Ground Identifier Badge */}
+            <Html 
+              position={[-(zone.block.width / 2) + Math.min(20, Math.max(10, zone.block.width * 0.15)), 0.25, -(zone.block.length / 2) + Math.min(16, Math.max(8, zone.block.length * 0.2))]} 
+              center 
+              zIndexRange={[60, 0]}
+            >
+              <div 
+                onClick={(e) => { e.stopPropagation(); setSelectedCropZoneId(isSelected ? null : zone.id); }}
+                style={{
+                  background: isSelected ? 'rgba(15, 26, 21, 0.98)' : 'rgba(15, 26, 21, 0.88)',
+                  border: isSelected ? `2px solid #ffffff` : `1.5px solid ${cropColor}`,
+                  borderRadius: '6px',
+                  padding: '3px 8px',
+                  color: '#ffffff',
+                  fontSize: '0.75rem',
+                  fontWeight: 700,
+                  whiteSpace: 'nowrap',
+                  boxShadow: `0 3px 10px ${cropColor}66`,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  userSelect: 'none',
+                  transition: 'all 0.15s ease',
+                }}
+                title={`Click to focus on ${zone.type} zone`}
+              >
+                <span 
+                  style={{ 
+                    width: '9px', 
+                    height: '9px', 
+                    borderRadius: '50%', 
+                    background: cropColor, 
+                    boxShadow: `0 0 8px ${cropColor}`,
+                    flexShrink: 0
+                  }} 
+                />
+                <span>{zone.type}</span>
+                <span style={{ color: cropColor, fontWeight: 700, fontSize: '0.7rem' }}>
+                  ({placedCount} plants)
+                </span>
+              </div>
+            </Html>
             
             {isSelected && (
-              <Html position={[0, 5, 0]} center zIndexRange={[100, 0]}>
-                <div className="info-card" style={{ borderLeft: `3px solid ${cropColor}` }}>
-                  <h4 style={{ color: cropColor }}>{zone.type}</h4>
-                  <div className="info-row"><span>Plants</span><span style={{ color: cropColor, fontWeight: 'bold' }}>{placedCount}</span></div>
+              <Html position={[0, 6, 0]} center zIndexRange={[100, 0]}>
+                <div className="info-card" style={{ borderLeft: `4px solid ${cropColor}` }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                    <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: cropColor }} />
+                    <h4 style={{ margin: 0, color: cropColor }}>{zone.type}</h4>
+                  </div>
+                  <div className="info-row"><span>Placed Plants</span><span style={{ color: cropColor, fontWeight: 'bold' }}>{placedCount}</span></div>
                   <div className="info-row"><span>Spacing</span><span>{zone.p2p}ft × {zone.r2r}ft</span></div>
                   <div className="info-row"><span>Area</span><span>{Math.round(zone.block.area).toLocaleString()} sq.ft</span></div>
                   <div className="info-row"><span>Allocation</span><span>{zone.percentage}%</span></div>

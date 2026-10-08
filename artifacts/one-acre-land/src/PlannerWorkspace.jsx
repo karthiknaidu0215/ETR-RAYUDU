@@ -6,6 +6,7 @@ import Ground from './components/Ground'
 import PlantModels from './components/PlantModels'
 import Infrastructure from './components/Infrastructure'
 import Stats from './components/Stats'
+import VisualizationLegend from './components/VisualizationLegend'
 import ObjectPropertiesPanel from './components/ObjectPropertiesPanel'
 import { useStore } from './store'
 
@@ -49,6 +50,7 @@ export default function PlannerWorkspace({ onNavigateToLibrary }) {
         )}
 
         {showStats && <Stats />}
+        <VisualizationLegend />
         {selectedInfraId && <ObjectPropertiesPanel />}
 
         {!webglAvailable ? (
